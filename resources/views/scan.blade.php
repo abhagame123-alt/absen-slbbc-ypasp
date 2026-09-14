@@ -358,11 +358,46 @@
             // LANGSUNG BUKA KAMERA TANPA MENUNGGU AI
             try {
                 html5QrcodeScanner = new Html5Qrcode("reader");
+                
+                // Cari kamera yang tersedia di perangkat (HP / Laptop)
+                const cameras = await Html5Qrcode.getCameras();
+                let selectedCameraId = { facingMode: "user" }; // Default depan
+
+                if (cameras && cameras.length > 0) {
+                    // Coba cari kamera belakang (environment / back)
+                    let backCamera = cameras.find(cam => 
+                        cam.label.toLowerCase().find('back') || 
+                        cam.label.toLowerCase().find('rear') || 
+                        cam.label.toLowerCase().find('belakang')
+                    );
+                    
+                    // Jika ada kamera belakang, jadikan pilihan prioritas atau sediakan opsi
+                    // Kita gunakan kamera terakhir (biasanya kamera belakang di HP) atau biarkan user pilih
+                    selectedCameraId = cameras.length > 1 ? cameras[cameras.length - 1].id : cameras[0].id;
+                }
+
                 await html5QrcodeScanner.start(
-                    { facingMode: "user" },
+                    selectedCameraId,
                     { fps: 10, qrbox: { width: 150, height: 150 } },
                     onQRSuccess
                 );
+                
+                loadingText.style.display = 'none';
+                scanLine.style.display = 'block';
+            } catch(e) {
+                // Fallback aman jika gagal
+                try {
+                    await html5QrcodeScanner.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: { width: 150, height: 150 } },
+                        onQRSuccess
+                    );
+                    loadingText.style.display = 'none';
+                    scanLine.style.display = 'block';
+                } catch(err2) {
+                    loadingText.innerText = "❌ Gagal membuka kamera. Izinkan akses kamera di browser.";
+                }
+            }
                 loadingText.style.display = 'none';
                 scanLine.style.display = 'block';
             } catch(e) {
