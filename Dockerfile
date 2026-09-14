@@ -1,11 +1,12 @@
 FROM php:8.3-fpm
 
-# Install ekstensi sistem & GD dengan nama paket standar
+# Install ekstensi sistem, GD, dan sqlite dev headers
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libsqlite3-dev \
     zip \
     unzip \
     git \
