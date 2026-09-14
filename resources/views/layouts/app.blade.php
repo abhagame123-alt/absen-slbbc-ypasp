@@ -11,9 +11,13 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- ======================================================= -->
-        <!-- SWEETALERT GLOBAL (Dipanggil sekali untuk semua halaman)-->
-        <!-- ======================================================= -->
+        <!-- Tailwind CSS CDN (Memulihkan styling asli secara instan) -->
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <!-- Alpine.js untuk Dropdown & Hamburger -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <!-- SWEETALERT GLOBAL -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <!-- Scripts -->
@@ -48,8 +52,8 @@
                         icon: 'success',
                         title: 'BERHASIL!',
                         text: "{!! session('success') !!}",
-                        showConfirmButton: false, // Tombol OK dihilangkan
-                        timer: 2500, // Hilang dalam 2.5 detik
+                        showConfirmButton: false,
+                        timer: 2500,
                         timerProgressBar: true
                     });
                 });
@@ -63,8 +67,8 @@
                         icon: 'error',
                         title: 'GAGAL!',
                         text: "{!! session('error') !!}",
-                        showConfirmButton: false, // Tombol OK dihilangkan juga
-                        timer: 3000, // Hilang dalam 3 detik (agak lama biar bisa dibaca)
+                        showConfirmButton: false,
+                        timer: 3000,
                         timerProgressBar: true
                     });
                 });
@@ -75,29 +79,24 @@
     </body>
     
     <!-- ======================================================= -->
-    <!-- MESIN TEMA GELAP GLOBAL (BERLAKU UNTUK SEMUA HALAMAN)   -->
+    <!-- MESIN TEMA GELAP GLOBAL                                 -->
     <!-- ======================================================= -->
     <style>
-        /* Transisi halus saat ganti tema */
         body, .bg-white, .bg-gray-100, nav, header { transition: background-color 0.4s ease, color 0.4s ease; }
         
-        /* Warna Dasar Mode Gelap */
         body.dark-mode { background-color: #111827 !important; color: #F3F4F6 !important; }
         body.dark-mode .bg-gray-100 { background-color: #111827 !important; }
         body.dark-mode .bg-white, body.dark-mode nav.bg-white { background-color: #1F2937 !important; border-color: #374151 !important; }
         body.dark-mode .text-gray-900, body.dark-mode .text-gray-800, body.dark-mode .text-gray-500 { color: #F9FAFB !important; }
         
-        /* Paksa Semua Tabel menjadi Gelap (Menimpa warna bawaan) */
         body.dark-mode table tr { background-color: transparent !important; }
         body.dark-mode table thead tr, body.dark-mode table th { background-color: #374151 !important; color: #FFF !important; border-color: #4B5563 !important; }
         body.dark-mode table td { color: #F3F4F6 !important; border-color: #374151 !important; }
         
-        /* Paksa Input Form menjadi Gelap */
         body.dark-mode input, body.dark-mode select { background-color: #374151 !important; color: white !important; border: 1px solid #4B5563 !important; }
     </style>
 
     <script>
-        // 1. Cek memori browser saat pindah-pindah halaman
         document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('tema_aplikasi') === 'gelap') {
                 document.body.classList.add('dark-mode');
@@ -105,7 +104,6 @@
             }
         });
 
-        // 2. Fungsi saklar (dipanggil saat tombol diklik)
         function toggleGlobalTheme() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -119,7 +117,6 @@
             }
         }
 
-        // 3. Sinkronisasi warna & teks tombol di menu atas
         function updateTombolGlobal(mode) {
             const icons = document.querySelectorAll('.g-icon');
             const texts = document.querySelectorAll('.g-text');
