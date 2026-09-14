@@ -111,7 +111,7 @@
         @endif
 
         <!-- Form Login -->
-        <form method="POST" action="{{ route('login') }}" autocomplete="off">
+        <form method="POST" action="/login" autocomplete="off">
             @csrf
 
             <div class="input-group">
