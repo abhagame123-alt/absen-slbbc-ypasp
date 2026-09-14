@@ -18,8 +18,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy semua file project
+# Copy semua file project termasuk composer.json
 COPY . .
+
+# Jalankan composer install untuk generate folder vendor
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Set permission 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
