@@ -90,9 +90,6 @@
         .status-error { background: #EF4444; color: white; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
         .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: rgba(16, 185, 129, 0.8); box-shadow: 0 0 10px #10B981, 0 0 20px #10B981; animation: scan 3s infinite linear; z-index: 15; display: none; }
         @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
-        
-        .camera-select-box { margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; background: #ECFDF5; padding: 6px; border-radius: 6px; border: 1px solid #A7F3D0; }
-        .camera-select-box select { background: white; border: 1px solid #10B981; color: #059669; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer; flex: 1; }
 
         .manual-container { margin-top: 8px; background-color: #ECFDF5; padding: 8px 10px; border-radius: 8px; border: 2px dashed #34D399; }
         .manual-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 10px; }
@@ -162,8 +159,6 @@
         body.dark-mode .badge-libur { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; border-color: #DC2626; }
         body.dark-mode .class-divider { background: #1E293B; color: #94A3B8; border-left-color: #3B82F6; }
         body.dark-mode .avatar-bulat { background: #334155; color: #9CA3AF; border-color: rgba(255,255,255,0.05); }
-        body.dark-mode .camera-select-box { background: #1E293B; border-color: #475569; }
-        body.dark-mode .camera-select-box select { background: #334155; color: white; border-color: #475569; }
 
         @keyframes flashSync { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .sync-active { animation: flashSync 0.8s ease-in-out; }
@@ -200,14 +195,6 @@
         <div class="w-full md:w-5/12 lg:w-4/12 scanner-container flex flex-col">
             <h2 class="title-scanner">⚡ HYBRID SCANNER</h2>
             <p class="subtitle-scanner">Deteksi QR Code & Wajah Otomatis.</p>
-            
-            <!-- KOTAK PILIHAN KAMERA (DIJAMIN MUNCUL) -->
-            <div class="camera-select-box" id="cameraSelectContainer">
-                <span style="font-size: 10px; font-weight: bold; color: #059669;">📷 Pilih Kamera:</span>
-                <select id="cameraSelection" onchange="gantiKameraPilihan()">
-                    <option value="">Memindai perangkat kamera...</option>
-                </select>
-            </div>
 
             <div class="mb-2 w-full border rounded-lg py-1.5 px-3 flex items-center justify-between shadow-sm transition-colors" 
                  id="boxInfoJam" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
@@ -224,7 +211,7 @@
                 <div id="reader"></div> 
                 <canvas id="overlay"></canvas>
                 <div id="scanLine" class="scan-line"></div>
-                <div id="loadingText" class="loader-overlay">📷 Membuka Kamera...</div>
+                <div id="loadingText" class="loader-overlay">📷 Membuka Kamera Otomatis...</div>
             </div>
 
             <div id="statusBox" class="status-box">
@@ -355,7 +342,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT PILIHAN KAMERA BERBASIS IZIN AKTIF -->
+    <!-- SCRIPT KAMERA OTOMATIS AMAN TANPA NYANGKUT -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
         let html5QrCode = null;
@@ -365,14 +352,13 @@
             const loadingText = document.getElementById('loadingText');
             const scanLine = document.getElementById('scanLine');
             const statusBox = document.getElementById('statusBox');
-            const selectBox = document.getElementById('cameraSelection');
 
             try {
                 html5QrCode = new Html5Qrcode("reader");
 
-                // Langsung nyalakan kamera default terlebih dahulu agar browser mengeluarkan izin akses (Permission Prompt)
+                // Coba buka menggunakan kamera apa saja yang tersedia secara otomatis tanpa macet
                 await html5QrCode.start(
-                    { facingMode: "environment" }, 
+                    { facingMode: "user" }, 
                     { fps: 10, qrbox: { width: 150, height: 150 } }, 
                     onQRSuccess
                 );
@@ -380,59 +366,20 @@
                 loadingText.style.display = 'none';
                 scanLine.style.display = 'block';
 
-                // Setelah kamera menyala dan izin didapat, ambil daftar perangkat kamera lengkap
-                try {
-                    const cameras = await Html5Qrcode.getCameras();
-                    if (cameras && cameras.length > 0) {
-                        selectBox.innerHTML = '';
-                        cameras.forEach((cam, index) => {
-                            let option = document.createElement('option');
-                            option.value = cam.id;
-                            option.text = cam.label || `Kamera ${index + 1}`;
-                            selectBox.appendChild(option);
-                        });
-                    }
-                } catch(errCamList) {
-                    console.log("Gagal melist kamera detail");
-                }
-
             } catch(e) {
-                // Fallback jika kamera belakang gagal, coba kamera depan (user)
+                // Fallback otomatis ke kamera lain jika facingMode user gagal
                 try {
                     await html5QrCode.start(
-                        { facingMode: "user" }, 
+                        { width: { ideal: 1280 }, height: { ideal: 720 } }, 
                         { fps: 10, qrbox: { width: 150, height: 150 } }, 
                         onQRSuccess
                     );
                     loadingText.style.display = 'none';
                     scanLine.style.display = 'block';
                 } catch(err2) {
-                    loadingText.innerText = "❌ Gagal membuka kamera. Izinkan akses kamera di browser.";
+                    loadingText.innerText = "❌ Gagal membuka kamera. Pastikan izin kamera aktif di browser.";
                 }
             }
-
-            window.gantiKameraPilihan = async function() {
-                const selectedId = selectBox.value;
-                if (!selectedId) return;
-                
-                try {
-                    if (html5QrCode && html5QrCode.isScanning) {
-                        await html5QrCode.stop();
-                    }
-                    loadingText.style.display = 'flex';
-                    loadingText.innerText = "🔄 Mengganti Kamera...";
-
-                    await html5QrCode.start(
-                        selectedId,
-                        { fps: 10, qrbox: { width: 150, height: 150 } },
-                        onQRSuccess
-                    );
-                    loadingText.style.display = 'none';
-                    scanLine.style.display = 'block';
-                } catch(err) {
-                    loadingText.innerText = "❌ Gagal mengganti kamera.";
-                }
-            };
 
             function onQRSuccess(decodedText) {
                 if (isScanning) return;
