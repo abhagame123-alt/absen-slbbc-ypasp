@@ -10,7 +10,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     
-                    <form action="{{ route('murid.update', $murid->id) }}" method="POST">
+                    <form action="/murid/{{ $murid->id }}" method="POST">
                         @csrf
                         @method('PUT') <!-- Ini sihir penanda kalau form ini untuk UPDATE -->
                         
