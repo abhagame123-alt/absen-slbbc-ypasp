@@ -33,7 +33,7 @@ RUN php artisan key:generate
 RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
 
 # Buat folder build vite dummy jika belum ada agar tidak error manifest
-RUN mkdir -p /var/www/html/public/build && echo '{"resources/css/app.css":{"file":"assets/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","isEntry":true}}' > /var/www/html/public/build/manifest.json
+RUN mkdir -p /var/www/html/public/build && echo '{"resources/css/app.css":{"file":"assets/app.css","src":"resources/css/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","src":"resources/js/app.js","isEntry":true}}' > /var/www/html/public/build/manifest.json
 
 # Set permission folder storage, cache, dan database
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
