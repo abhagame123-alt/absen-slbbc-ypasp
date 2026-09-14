@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
+    && docker-php-ext-install gd pdo pdo_mysql pdo_sqlite
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -24,13 +24,16 @@ COPY . .
 # Jalankan composer install
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Salin .env.example jadi .env jika belum ada, lalu generate key
+# Siapkan file .env dan generate key
 RUN cp .env.example .env || echo "APP_KEY=" > .env
 RUN php artisan key:generate
 
-# Set permission folder storage dan cache agar bisa ditulis
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/.env \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Buat file database SQLite kosong jika menggunakan sqlite
+RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
+
+# Set permission folder storage, cache, dan database
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
 # Konfigurasi Nginx untuk Laravel
 RUN echo 'server {\n\
