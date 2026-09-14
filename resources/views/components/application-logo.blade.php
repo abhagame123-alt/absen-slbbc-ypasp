@@ -1,0 +1,1 @@
+<img src="{{ asset('logo.png') }}" alt="Logo SLB" style="height: 50px; width: auto;">
