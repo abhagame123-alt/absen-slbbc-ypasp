@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Install ekstensi sistem, GD, dan sqlite dev headers
+# Install ekstensi sistem, GD, sqlite dev headers, dan Node.js (untuk Vite build)
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_mysql pdo_sqlite
 
@@ -22,8 +25,11 @@ WORKDIR /var/www/html
 # Copy semua file project
 COPY . .
 
-# Jalankan composer install tanpa --no-dev agar faker ikut ter-install
+# Install dependencies PHP (termasuk dev untuk faker)
 RUN composer install --optimize-autoloader --no-interaction
+
+# Install dependencies Node.js dan build asset Vite (manifest.json)
+RUN npm install && npm run build
 
 # Siapkan file .env dan generate key
 RUN cp .env.example .env || echo "APP_KEY=" > .env
