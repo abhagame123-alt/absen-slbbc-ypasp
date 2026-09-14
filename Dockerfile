@@ -1,10 +1,10 @@
 FROM php:8.3-fpm
 
-# Install ekstensi sistem & GD
+# Install ekstensi sistem & GD dengan dependensi yang bersih
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     zip \
     unzip \
@@ -28,7 +28,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN cp .env.example .env || echo "APP_KEY=" > .env
 RUN php artisan key:generate
 
-# Buat file database SQLite kosong jika menggunakan sqlite
+# Buat file database SQLite kosong
 RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
 
 # Set permission folder storage, cache, dan database
