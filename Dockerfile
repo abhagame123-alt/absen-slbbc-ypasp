@@ -18,14 +18,19 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy semua file project termasuk composer.json
+# Copy semua file project
 COPY . .
 
-# Jalankan composer install untuk generate folder vendor
+# Jalankan composer install
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Set permission 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Salin .env.example jadi .env jika belum ada, lalu generate key
+RUN cp .env.example .env || echo "APP_KEY=" > .env
+RUN php artisan key:generate
+
+# Set permission folder storage dan cache agar bisa ditulis
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/.env \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Konfigurasi Nginx untuk Laravel
 RUN echo 'server {\n\
