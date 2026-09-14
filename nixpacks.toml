@@ -2,4 +2,4 @@
 phpPkgs = ["gd", "mbstring", "pdo", "tokenizer", "xml", "ctype", "fileinfo"]
 
 [phases.build]
-cmds = ["composer install --no-dev --optimize-autoloader"]
+cmds = ["composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-gd"]
