@@ -345,7 +345,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT LOGIKA UTAMA -->
+    <!-- SCRIPT LOGIKA UTAMA (UNIVERSAL LAPTOP & HP) -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
@@ -355,55 +355,39 @@
             let isScanning = false;
             let html5QrcodeScanner = null;
 
-            // LANGSUNG BUKA KAMERA TANPA MENUNGGU AI
+            // BUKA KAMERA SECARA UNIVERSAL TANPA BENTROK
             try {
                 html5QrcodeScanner = new Html5Qrcode("reader");
                 
-                // Cari kamera yang tersedia di perangkat (HP / Laptop)
-                const cameras = await Html5Qrcode.getCameras();
-                let selectedCameraId = { facingMode: "user" }; // Default depan
-
-                if (cameras && cameras.length > 0) {
-                    // Coba cari kamera belakang (environment / back)
-                    let backCamera = cameras.find(cam => 
-                        cam.label.toLowerCase().find('back') || 
-                        cam.label.toLowerCase().find('rear') || 
-                        cam.label.toLowerCase().find('belakang')
-                    );
-                    
-                    // Jika ada kamera belakang, jadikan pilihan prioritas atau sediakan opsi
-                    // Kita gunakan kamera terakhir (biasanya kamera belakang di HP) atau biarkan user pilih
-                    selectedCameraId = cameras.length > 1 ? cameras[cameras.length - 1].id : cameras[0].id;
+                let cameraConfig = { facingMode: "user" }; // Default aman untuk laptop & kamera depan HP
+                try {
+                    const devices = await Html5Qrcode.getCameras();
+                    if (devices && devices.length > 0) {
+                        // Jika ada kamera belakang (di HP), gunakan kamera belakang, jika tidak pakai kamera pertama
+                        let backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('belakang') || d.label.toLowerCase().includes('rear'));
+                        if (backCam) {
+                            cameraConfig = backCam.id;
+                        } else {
+                            cameraConfig = devices[0].id;
+                        }
+                    }
+                } catch(errCam) {
+                    console.log("Menggunakan default facingMode user");
                 }
 
                 await html5QrcodeScanner.start(
-                    selectedCameraId,
+                    cameraConfig,
                     { fps: 10, qrbox: { width: 150, height: 150 } },
                     onQRSuccess
                 );
                 
                 loadingText.style.display = 'none';
                 scanLine.style.display = 'block';
-            } catch(e) {
-                // Fallback aman jika gagal
-                try {
-                    await html5QrcodeScanner.start(
-                        { facingMode: "environment" },
-                        { fps: 10, qrbox: { width: 150, height: 150 } },
-                        onQRSuccess
-                    );
-                    loadingText.style.display = 'none';
-                    scanLine.style.display = 'block';
-                } catch(err2) {
-                    loadingText.innerText = "❌ Gagal membuka kamera. Izinkan akses kamera di browser.";
-                }
-            }
-                loadingText.style.display = 'none';
-                scanLine.style.display = 'block';
+
             } catch(e) {
                 try {
                     await html5QrcodeScanner.start(
-                        { facingMode: "environment" },
+                        { facingMode: "user" },
                         { fps: 10, qrbox: { width: 150, height: 150 } },
                         onQRSuccess
                     );
