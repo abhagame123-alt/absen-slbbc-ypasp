@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div style="background-color: #1E293B; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; border: 1px solid #334155;">
                 
-                <form action="{{ route('murid.store') }}" method="POST">
+                <form action="/murid" method="POST">
                     @csrf
 
                     @php
