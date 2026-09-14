@@ -565,14 +565,39 @@
                 mulaiScannerQR();
             }
 
-            function mulaiScannerQR() {
+            async function mulaiScannerQR() {
                 try {
-                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-                        fps: 10, 
-                        qrbox: {width: 150, height: 150}
-                    }, false);
+                    html5QrcodeScanner = new Html5Qrcode("reader");
+                    const config = { fps: 10, qrbox: { width: 150, height: 150 } };
                     
-                    html5QrcodeScanner.render(onQRSuccess);
+                    // Langsung paksa minta izin dan buka kamera menghadap depan (user/environment)
+                    await html5QrcodeScanner.start(
+                        { facingMode: "user" }, 
+                        config, 
+                        onQRSuccess,
+                        (errorMessage) => { /* Abaikan error frame kecil */ }
+                    );
+
+                    loadingText.style.display = 'none'; 
+                    scanLine.style.display = 'block'; 
+                    mulaiDeteksiWajah();
+
+                } catch(e) {
+                    // Fallback jika kamera depan gagal, coba kamera belakang/default
+                    try {
+                        await html5QrcodeScanner.start(
+                            { facingMode: "environment" }, 
+                            { fps: 10, qrbox: { width: 150, height: 150 } }, 
+                            onQRSuccess
+                        );
+                        loadingText.style.display = 'none'; 
+                        scanLine.style.display = 'block'; 
+                        mulaiDeteksiWajah();
+                    } catch(err2) {
+                        loadingText.innerText = "❌ Kamera Gagal Diakses! Pastikan izin HTTPS / Browser aktif.";
+                    }
+                }
+            }
 
                     setTimeout(() => {
                         if(!document.querySelector('#reader video')) {
