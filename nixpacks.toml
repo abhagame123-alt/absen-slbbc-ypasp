@@ -1,2 +1,5 @@
 [phases.setup]
 phpPkgs = ["gd", "mbstring", "pdo", "tokenizer", "xml", "ctype", "fileinfo"]
+
+[phases.build]
+cmds = ["composer install --no-dev --optimize-autoloader"]
