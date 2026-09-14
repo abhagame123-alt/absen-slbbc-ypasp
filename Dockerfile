@@ -1,10 +1,10 @@
 FROM php:8.3-fpm
 
-# Install ekstensi sistem & GD dengan dependensi yang bersih
+# Install ekstensi sistem & GD dengan nama paket standar
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
-    libjpeg62-turbo-dev \
+    libjpeg-dev \
     libfreetype6-dev \
     zip \
     unzip \
