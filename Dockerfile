@@ -53,5 +53,5 @@ RUN echo 'server {\n\
 
 EXPOSE 8080
 
-# Jalankan migrasi database, lalu jalankan PHP-FPM dan Nginx
-CMD php artisan migrate --force && service nginx start && php-fpm
+# Jalankan migrasi, seeder, lalu jalankan PHP-FPM dan Nginx
+CMD php artisan migrate --force && php artisan db:seed --force && service nginx start && php-fpm
