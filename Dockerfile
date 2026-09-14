@@ -1,7 +1,8 @@
-FROM php:8.3-apache
+FROM php:8.3-fpm
 
 # Install ekstensi sistem & GD
 RUN apt-get update && apt-get install -y \
+    nginx \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -23,20 +24,22 @@ COPY . .
 # Set permission 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Atur Apache DocumentRoot ke folder public Laravel
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
-
-# Disable modul MPM event/worker dengan bersih lewat a2dismod dan aktifkan mpm_prefork
-RUN a2dismod mpm_event || true
-RUN a2dismod mpm_worker || true
-RUN a2enmod mpm_prefork
-
-# Atur port Apache ke 8080 untuk Railway
-RUN echo "Listen 8080" > /etc/apache2/ports.conf
-RUN sed -i 's/:80/:8080/g' /etc/apache2/sites-available/000-default.conf
+# Konfigurasi Nginx untuk Laravel
+RUN echo 'server {\n\
+    listen 8080;\n\
+    index index.php index.html;\n\
+    root /var/www/html/public;\n\
+    location / {\n\
+        try_files $uri $uri/ /index.php?$query_string;\n\
+    }\n\
+    location ~ \\.php$ {\n\
+        include fastcgi_params;\n\
+        fastcgi_pass 127.0.0.1:9000;\n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+    }\n\
+}' > /etc/nginx/sites-available/default
 
 EXPOSE 8080
 
-CMD ["apache2-foreground"]
+# Jalankan PHP-FPM dan Nginx secara bersamaan
+CMD service nginx start && php-fpm
