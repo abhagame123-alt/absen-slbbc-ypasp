@@ -90,15 +90,17 @@
         .status-error { background: #EF4444; color: white; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
         .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: rgba(16, 185, 129, 0.8); box-shadow: 0 0 10px #10B981, 0 0 20px #10B981; animation: scan 3s infinite linear; z-index: 15; display: none; }
         @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+        
+        .camera-select-box { margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; background: #ECFDF5; padding: 6px; border-radius: 6px; border: 1px solid #A7F3D0; }
+        .camera-select-box select { background: white; border: 1px solid #10B981; color: #065F46; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer; flex: 1; }
+
         .manual-container { margin-top: 8px; background-color: #ECFDF5; padding: 8px 10px; border-radius: 8px; border: 2px dashed #34D399; }
         .manual-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 10px; }
         .input-manual { padding: 4px; border-radius: 4px; border: 1px solid #10B981; background-color: #FFFFFF; color: #1F2937; outline: none; transition: 0.3s; font-size: 10px; }
         .input-manual:focus { box-shadow: 0 0 0 3px rgba(16,185,129,0.3); border-color: #059669; }
         .btn-manual { background-color: #10B981; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 10px; border: none; cursor: pointer; transition: 0.3s; }
         .btn-manual:hover { background-color: #059669; }
-        #reader select { background-color: #334155 !important; color: #FFFFFF !important; border: 1px solid #475569 !important; padding: 4px !important; border-radius: 4px !important; outline: none !important; margin-bottom: 2px; width: auto; max-width: 100%; font-size: 10px;}
-        #reader button { background-color: #3B82F6 !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 4px !important; font-weight: bold !important; cursor: pointer !important; margin-top: 2px !important; font-size: 10px; }
-        #reader a { color: #10B981 !important; text-decoration: none !important; font-weight: bold !important; font-size: 10px;}
+        
         .list-card { background: #FFFFFF; border-radius: 12px; padding: 10px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.08); border: 2px solid #6EE7B7; transition: all 0.3s; display: flex; flex-direction: column; flex: 1; min-height: 250px; overflow: hidden;}
         .list-header { font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 2px dashed #A7F3D0; text-align: center;}
         .scroll-list { overflow-y: auto; flex: 1; padding-right: 3px; height: 100%;}
@@ -158,9 +160,10 @@
         body.dark-mode .badge-waiting { background: rgba(239, 68, 68, 0.2); color: #F87171; border-color: #DC2626; }
         body.dark-mode .scroll-list::-webkit-scrollbar-thumb { background: #475569; }
         body.dark-mode .badge-libur { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; border-color: #DC2626; }
-        
         body.dark-mode .class-divider { background: #1E293B; color: #94A3B8; border-left-color: #3B82F6; }
         body.dark-mode .avatar-bulat { background: #334155; color: #9CA3AF; border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .camera-select-box { background: #1E293B; border-color: #475569; }
+        body.dark-mode .camera-select-box select { background: #334155; color: white; border-color: #475569; }
 
         @keyframes flashSync { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .sync-active { animation: flashSync 0.8s ease-in-out; }
@@ -168,7 +171,6 @@
 </head>
 <body class="flex flex-col h-screen">
 
-    <!-- BRANKAS DATA WAJAH -->
     <script id="brankas-data-wajah" type="application/json">
         {!! $json_wajah_murni !!}
     </script>
@@ -199,7 +201,13 @@
             <h2 class="title-scanner">⚡ HYBRID SCANNER</h2>
             <p class="subtitle-scanner">Deteksi QR Code & Wajah Otomatis.</p>
             
-            <div class="mb-3 w-full border rounded-lg py-1.5 px-3 flex items-center justify-between shadow-sm transition-colors" 
+            <!-- TOMBOL PILIHAN KAMERA (MUNCUL OTOMATIS) -->
+            <div class="camera-select-box" id="cameraSelectContainer" style="display: none;">
+                <span style="font-size: 10px; font-weight: bold; color: #059669;">📷 Kamera:</span>
+                <select id="cameraSelection" onchange="gantiKameraPilihan()"></select>
+            </div>
+
+            <div class="mb-2 w-full border rounded-lg py-1.5 px-3 flex items-center justify-between shadow-sm transition-colors" 
                  id="boxInfoJam" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
                 <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider" id="teksInfoJam" style="color: #2563EB;">
                     Jam Pulang:
@@ -214,7 +222,7 @@
                 <div id="reader"></div> 
                 <canvas id="overlay"></canvas>
                 <div id="scanLine" class="scan-line"></div>
-                <div id="loadingText" class="loader-overlay">📷 Membuka Kamera Secara Instan...</div>
+                <div id="loadingText" class="loader-overlay">📷 Membuka Kamera...</div>
             </div>
 
             <div id="statusBox" class="status-box">
@@ -345,63 +353,82 @@
         </div>
     </div>
 
-    <!-- SCRIPT LOGIKA UTAMA (UNIVERSAL LAPTOP & HP) -->
+    <!-- SCRIPT UTAMA PILIHAN KAMERA + SCANNER -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
+        let html5QrCode = null;
+        let currentCameraId = null;
+        let isScanning = false;
+
         document.addEventListener("DOMContentLoaded", async () => {
             const loadingText = document.getElementById('loadingText');
             const scanLine = document.getElementById('scanLine');
             const statusBox = document.getElementById('statusBox');
-            let isScanning = false;
-            let html5QrcodeScanner = null;
 
-            // BUKA KAMERA SECARA UNIVERSAL TANPA BENTROK
             try {
-                html5QrcodeScanner = new Html5Qrcode("reader");
-                
-                let cameraConfig = { facingMode: "user" }; // Default aman untuk laptop & kamera depan HP
-                try {
-                    const devices = await Html5Qrcode.getCameras();
-                    if (devices && devices.length > 0) {
-                        // Jika ada kamera belakang (di HP), gunakan kamera belakang, jika tidak pakai kamera pertama
-                        let backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('belakang') || d.label.toLowerCase().includes('rear'));
-                        if (backCam) {
-                            cameraConfig = backCam.id;
-                        } else {
-                            cameraConfig = devices[0].id;
-                        }
+                html5QrCode = new Html5Qrcode("reader");
+                const cameras = await Html5Qrcode.getCameras();
+
+                if (cameras && cameras.length > 0) {
+                    const selectBox = document.getElementById('cameraSelection');
+                    selectBox.innerHTML = '';
+
+                    cameras.forEach((cam, index) => {
+                        let option = document.createElement('option');
+                        option.value = cam.id;
+                        option.text = cam.label || `Kamera ${index + 1}`;
+                        selectBox.appendChild(option);
+                    });
+
+                    document.getElementById('cameraSelectContainer').style.display = 'flex';
+
+                    // Pilih kamera belakang secara default jika di HP, atau kamera pertama di laptop
+                    let targetCamId = cameras[0].id;
+                    let backCam = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('belakang') || c.label.toLowerCase().includes('rear'));
+                    if (backCam) {
+                        targetCamId = backCam.id;
+                        selectBox.value = backCam.id;
                     }
-                } catch(errCam) {
-                    console.log("Menggunakan default facingMode user");
+
+                    await mulaiKamera(targetCamId);
+                } else {
+                    // Fallback jika tidak terdeteksi via getCameras
+                    await html5QrCode.start({ facingMode: "user" }, { fps: 10, qrbox: { width: 150, height: 150 } }, onQRSuccess);
+                    loadingText.style.display = 'none';
+                    scanLine.style.display = 'block';
                 }
-
-                await html5QrcodeScanner.start(
-                    cameraConfig,
-                    { fps: 10, qrbox: { width: 150, height: 150 } },
-                    onQRSuccess
-                );
-                
-                loadingText.style.display = 'none';
-                scanLine.style.display = 'block';
-
             } catch(e) {
+                loadingText.innerText = "❌ Gagal mendeteksi kamera. Pastikan izin kamera aktif.";
+            }
+
+            window.gantiKameraPilihan = async function() {
+                const selectBox = document.getElementById('cameraSelection');
+                const selectedId = selectBox.value;
+                if (html5QrCode && html5QrCode.isScanning) {
+                    await html5QrCode.stop();
+                }
+                await mulaiKamera(selectedId);
+            };
+
+            async function mulaiKamera(camId) {
                 try {
-                    await html5QrcodeScanner.start(
-                        { facingMode: "user" },
+                    currentCameraId = camId;
+                    await html5QrCode.start(
+                        camId,
                         { fps: 10, qrbox: { width: 150, height: 150 } },
                         onQRSuccess
                     );
                     loadingText.style.display = 'none';
                     scanLine.style.display = 'block';
-                } catch(err2) {
-                    loadingText.innerText = "❌ Gagal membuka kamera. Izinkan akses kamera di browser.";
+                } catch(err) {
+                    loadingText.innerText = "❌ Gagal menyalakan kamera yang dipilih.";
                 }
             }
 
             function onQRSuccess(decodedText) {
                 if (isScanning) return;
                 isScanning = true;
-                html5QrcodeScanner.pause(true);
+                if(html5QrCode) html5QrCode.pause(true);
                 
                 let statusTerpilih = document.getElementById('inputStatusManual').value;
                 updateStatusBox("QR Code Dikenali! Mengirim... ⏳", "normal");
@@ -446,8 +473,8 @@
             function resetScanner() {
                 scanLine.style.animationPlayState = 'running';
                 updateStatusBox("Menunggu QR Code / Wajah... 👁️", "normal");
-                if(html5QrcodeScanner) {
-                    html5QrcodeScanner.resume();
+                if(html5QrCode) {
+                    html5QrCode.resume();
                 }
                 setTimeout(() => { isScanning = false; }, 1000);
             }
