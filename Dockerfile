@@ -22,8 +22,8 @@ WORKDIR /var/www/html
 # Copy semua file project
 COPY . .
 
-# Jalankan composer install
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Jalankan composer install tanpa --no-dev agar faker ikut ter-install
+RUN composer install --optimize-autoloader --no-interaction
 
 # Siapkan file .env dan generate key
 RUN cp .env.example .env || echo "APP_KEY=" > .env
