@@ -31,8 +31,10 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 # Hapus konflik MPM event/worker secara paksa
 RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
 
-# Atur port Apache ke 8080 untuk Railway
-RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+# Atur port Apache ke 8080 dengan bind ke semua IP (0.0.0.0) agar terbaca Railway
+RUN sed -i "s/80/8080/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+RUN sed -i "s/Listen 8080/Listen 0.0.0.0:8080/g" /etc/apache2/ports.conf
+
 EXPOSE 8080
 
 CMD ["apache2-foreground"]
