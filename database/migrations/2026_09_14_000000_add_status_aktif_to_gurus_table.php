@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    up(): void
+    public function up(): void
     {
         Schema::table('gurus', function (Blueprint $table) {
             if (!Schema::hasColumn('gurus', 'status_aktif')) {
@@ -21,7 +21,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    down(): void
+    public function down(): void
     {
         Schema::table('gurus', function (Blueprint $table) {
             $table->dropColumn('status_aktif');
