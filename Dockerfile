@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Install ekstensi sistem, GD, sqlite dev headers, dan Node.js (untuk Vite build)
+# Install ekstensi sistem, GD, dan sqlite dev headers
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
@@ -10,9 +10,6 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_mysql pdo_sqlite
 
@@ -25,11 +22,8 @@ WORKDIR /var/www/html
 # Copy semua file project
 COPY . .
 
-# Install dependencies PHP (termasuk dev untuk faker)
+# Jalankan composer install termasuk dev untuk faker
 RUN composer install --optimize-autoloader --no-interaction
-
-# Install dependencies Node.js dan build asset Vite (manifest.json)
-RUN npm install && npm run build
 
 # Siapkan file .env dan generate key
 RUN cp .env.example .env || echo "APP_KEY=" > .env
@@ -37,6 +31,9 @@ RUN php artisan key:generate
 
 # Buat file database SQLite kosong
 RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
+
+# Buat folder build vite dummy jika belum ada agar tidak error manifest
+RUN mkdir -p /var/www/html/public/build && echo '{"resources/css/app.css":{"file":"assets/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","isEntry":true}}' > /var/www/html/public/build/manifest.json
 
 # Set permission folder storage, cache, dan database
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
