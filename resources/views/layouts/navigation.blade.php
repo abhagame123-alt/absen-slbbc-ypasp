@@ -83,7 +83,7 @@
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden px-4 pt-2 pb-4 space-y-1">
-        <a href="{{ route('dashboard')" class="block py-2 text-base font-medium text-gray-700">Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="block py-2 text-base font-medium text-gray-700">Dashboard</a>
         <a href="{{ auth()->user()->email == 'mesinabsen@gmail.com' ? route('scan.guru') : route('scan') }}" class="block py-2 text-base font-medium text-gray-700">Scanner Kamera</a>
         @if(auth()->user()->email == 'abhaadmin234@gmail.com')
             <a href="{{ route('murid.index') }}" class="block py-2 text-base font-medium text-gray-700">Data Murid</a>
