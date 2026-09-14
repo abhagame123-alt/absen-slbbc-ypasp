@@ -530,14 +530,46 @@
             let canvas = document.getElementById('overlay');
 
             try {
+                loadingText.innerText = "📷 Membuka Kamera...";
+                
+                // Coba muat AI dengan batas waktu (timeout 4 detik), kalau lambat langsung abaikan & buka kamera
                 const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-                await Promise.all([
+                
+                const loadAiPromise = Promise.all([
                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
+
+                // Timeout 4 detik agar tidak stuck selamanya
+                await Promise.race([
+                    loadAiPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 4000))
+                ]);
                 
-                loadingText.innerText = "🧠 Memuat AI...";
+                const dbWajahStr = document.getElementById('brankas-data-wajah').textContent;
+                const databaseWajah = JSON.parse(dbWajahStr || "[]");
+
+                if(databaseWajah && databaseWajah.length > 0) {
+                    const labeledDescriptors = [];
+                    for (const murid of databaseWajah) {
+                        try {
+                            const faceDataArray = JSON.parse(murid.face_data);
+                            const float32Array = new Float32Array(faceDataArray);
+                            const label = `${murid.nis}_${murid.nama_lengkap}`;
+                            labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(label, [float32Array]));
+                        } catch (e) {}
+                    }
+                    if(labeledDescriptors.length > 0) {
+                        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.55); 
+                    }
+                }
+            } catch (err) {
+                console.log("AI offline/timeout, scanner QR tetap aktif.");
+            }
+            
+            // Kamera dijamin pasti terbuka terlepas AI sukses atau tidak
+            mulaiScannerQR();
                 
                 const dbWajahStr = document.getElementById('brankas-data-wajah').textContent;
                 const databaseWajah = JSON.parse(dbWajahStr || "[]");
