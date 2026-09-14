@@ -23,12 +23,15 @@ COPY . .
 # Set permission 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Konfigurasi Apache DocumentRoot ke folder public Laravel
+# Atur Apache DocumentRoot ke folder public Laravel
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Agar Apache mendengarkan port dinamis dari Railway
+# Fix error More than one MPM loaded dengan disable event/worker dan pakai prefork
+RUN a2dismod mpm_event mpm_worker && a2enmod mpm_prefork
+
+# Atur port Apache ke 8080 untuk Railway
 RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 EXPOSE 8080
 
