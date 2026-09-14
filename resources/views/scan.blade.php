@@ -79,7 +79,9 @@
         .camera-wrapper { position: relative; width: 100%; min-height: 250px; background: black; border-radius: 8px; overflow: hidden; border: 3px solid #10B981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
         #reader { width: 100%; min-height: 250px; }
-        #reader__dashboard_section { padding: 4px !important; background: #1E293B !important; color: white !important; display: none !important; }
+        #reader__dashboard_section { padding: 4px !important; background: #1E293B !important; color: white !important; }
+        #reader__dashboard_section button { background-color: #3B82F6 !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 4px !important; font-weight: bold !important; cursor: pointer !important; font-size: 10px !important; margin: 2px !important; }
+        #reader__dashboard_section select { background-color: #334155 !important; color: white !important; padding: 4px !important; border-radius: 4px !important; font-size: 10px !important; }
         #reader__scan_region { position: relative !important; overflow: hidden !important; background: black !important; height: 30vh !important; max-height: 220px !important; min-height: 150px !important;}
         video { object-fit: cover !important; width: 100% !important; height: 100% !important; transform: scaleX(-1); display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); z-index: 20; pointer-events: none;}
@@ -211,7 +213,7 @@
                 <div id="reader"></div> 
                 <canvas id="overlay"></canvas>
                 <div id="scanLine" class="scan-line"></div>
-                <div id="loadingText" class="loader-overlay">📷 Membuka Kamera Otomatis...</div>
+                <div id="loadingText" class="loader-overlay">📷 Membuka Kamera Standar...</div>
             </div>
 
             <div id="statusBox" class="status-box">
@@ -342,49 +344,38 @@
         </div>
     </div>
 
-    <!-- SCRIPT KAMERA OTOMATIS AMAN TANPA NYANGKUT -->
+    <!-- SCRIPT HTML5-QRCODE SCANNER STANDARD DENGAN PILIHAN KAMERA BAWAAN -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
-        let html5QrCode = null;
-        let isScanning = false;
-
-        document.addEventListener("DOMContentLoaded", async () => {
+        document.addEventListener("DOMContentLoaded", () => {
             const loadingText = document.getElementById('loadingText');
             const scanLine = document.getElementById('scanLine');
             const statusBox = document.getElementById('statusBox');
+            let isScanning = false;
 
-            try {
-                html5QrCode = new Html5Qrcode("reader");
+            // Menggunakan Html5QrcodeScanner standar bawaan library yang secara otomatis menyediakan tombol pilihan kamera depan & belakang
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", 
+                { 
+                    fps: 10, 
+                    qrbox: { width: 150, height: 150 },
+                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+                }, 
+                false
+            );
 
-                // Coba buka menggunakan kamera apa saja yang tersedia secara otomatis tanpa macet
-                await html5QrCode.start(
-                    { facingMode: "user" }, 
-                    { fps: 10, qrbox: { width: 150, height: 150 } }, 
-                    onQRSuccess
-                );
+            html5QrcodeScanner.render(onQRSuccess, (err) => {});
 
+            // Sembunyikan loading setelah elemen scanner selesai dirender
+            setTimeout(() => {
                 loadingText.style.display = 'none';
                 scanLine.style.display = 'block';
-
-            } catch(e) {
-                // Fallback otomatis ke kamera lain jika facingMode user gagal
-                try {
-                    await html5QrCode.start(
-                        { width: { ideal: 1280 }, height: { ideal: 720 } }, 
-                        { fps: 10, qrbox: { width: 150, height: 150 } }, 
-                        onQRSuccess
-                    );
-                    loadingText.style.display = 'none';
-                    scanLine.style.display = 'block';
-                } catch(err2) {
-                    loadingText.innerText = "❌ Gagal membuka kamera. Pastikan izin kamera aktif di browser.";
-                }
-            }
+            }, 1000);
 
             function onQRSuccess(decodedText) {
                 if (isScanning) return;
                 isScanning = true;
-                if(html5QrCode) html5QrCode.pause(true);
+                html5QrcodeScanner.pause(true);
                 
                 let statusTerpilih = document.getElementById('inputStatusManual').value;
                 updateStatusBox("QR Code Dikenali! Mengirim... ⏳", "normal");
@@ -429,9 +420,7 @@
             function resetScanner() {
                 scanLine.style.animationPlayState = 'running';
                 updateStatusBox("Menunggu QR Code / Wajah... 👁️", "normal");
-                if(html5QrCode) {
-                    html5QrCode.resume();
-                }
+                html5QrcodeScanner.resume();
                 setTimeout(() => { isScanning = false; }, 1000);
             }
 
