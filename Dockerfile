@@ -53,5 +53,5 @@ RUN echo 'server {\n\
 
 EXPOSE 8080
 
-# Jalankan migrasi, seeder, lalu jalankan PHP-FPM dan Nginx
-CMD php artisan migrate --force && php artisan db:seed --force && service nginx start && php-fpm
+# Jalankan migrate fresh dan seeding ulang agar seluruh kolom tabel terbaru ikut ter-generate
+CMD php artisan migrate:fresh --seed --force && service nginx start && php-fpm
