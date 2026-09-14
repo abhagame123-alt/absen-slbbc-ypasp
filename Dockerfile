@@ -32,12 +32,14 @@ RUN php artisan key:generate
 # Buat file database SQLite kosong
 RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
 
-# Buat folder build vite dummy jika belum ada agar tidak error manifest
-RUN mkdir -p /var/www/html/public/build && echo '{"resources/css/app.css":{"file":"assets/app.css","src":"resources/css/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","src":"resources/js/app.js","isEntry":true}}' > /var/www/html/public/build/manifest.json
+# Buat folder build vite dan file asset CSS manual langsung di dalam container
+RUN mkdir -p /var/www/html/public/build/assets \
+    && echo '/* Layout Fix */ body { font-family: ui-sans-serif, system-ui, sans-serif; }' > /var/www/html/public/build/assets/app.css \
+    && echo '{"resources/css/app.css":{"file":"assets/app.css","src":"resources/css/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","src":"resources/js/app.js","isEntry":true}}' > /var/www/html/public/build/manifest.json
 
-# Set permission folder storage, cache, dan database
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+# Set permission folder storage, cache, database, dan public/build
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/build \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/build
 
 # Konfigurasi Nginx untuk Laravel
 RUN echo 'server {\n\
