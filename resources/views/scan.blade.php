@@ -79,7 +79,7 @@
         .camera-wrapper { position: relative; width: 100%; min-height: 250px; background: black; border-radius: 8px; overflow: hidden; border: 3px solid #10B981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
         #reader { width: 100%; min-height: 250px; }
-        #reader__dashboard_section { padding: 4px !important; background: #1E293B !important; color: white !important; }
+        #reader__dashboard_section { padding: 4px !important; background: #1E293B !important; color: white !important; display: none !important; }
         #reader__scan_region { position: relative !important; overflow: hidden !important; background: black !important; height: 30vh !important; max-height: 220px !important; min-height: 150px !important;}
         video { object-fit: cover !important; width: 100% !important; height: 100% !important; transform: scaleX(-1); display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); z-index: 20; pointer-events: none;}
@@ -92,7 +92,7 @@
         @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
         
         .camera-select-box { margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; background: #ECFDF5; padding: 6px; border-radius: 6px; border: 1px solid #A7F3D0; }
-        .camera-select-box select { background: white; border: 1px solid #10B981; color: #065F46; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer; flex: 1; }
+        .camera-select-box select { background: white; border: 1px solid #10B981; color: #059669; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer; flex: 1; }
 
         .manual-container { margin-top: 8px; background-color: #ECFDF5; padding: 8px 10px; border-radius: 8px; border: 2px dashed #34D399; }
         .manual-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 10px; }
@@ -201,10 +201,12 @@
             <h2 class="title-scanner">⚡ HYBRID SCANNER</h2>
             <p class="subtitle-scanner">Deteksi QR Code & Wajah Otomatis.</p>
             
-            <!-- TOMBOL PILIHAN KAMERA (MUNCUL OTOMATIS) -->
-            <div class="camera-select-box" id="cameraSelectContainer" style="display: none;">
-                <span style="font-size: 10px; font-weight: bold; color: #059669;">📷 Kamera:</span>
-                <select id="cameraSelection" onchange="gantiKameraPilihan()"></select>
+            <!-- KOTAK PILIHAN KAMERA (DIJAMIN MUNCUL) -->
+            <div class="camera-select-box" id="cameraSelectContainer">
+                <span style="font-size: 10px; font-weight: bold; color: #059669;">📷 Pilih Kamera:</span>
+                <select id="cameraSelection" onchange="gantiKameraPilihan()">
+                    <option value="">Memindai perangkat kamera...</option>
+                </select>
             </div>
 
             <div class="mb-2 w-full border rounded-lg py-1.5 px-3 flex items-center justify-between shadow-sm transition-colors" 
@@ -353,77 +355,84 @@
         </div>
     </div>
 
-    <!-- SCRIPT UTAMA PILIHAN KAMERA + SCANNER -->
+    <!-- SCRIPT PILIHAN KAMERA BERBASIS IZIN AKTIF -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
         let html5QrCode = null;
-        let currentCameraId = null;
         let isScanning = false;
 
         document.addEventListener("DOMContentLoaded", async () => {
             const loadingText = document.getElementById('loadingText');
             const scanLine = document.getElementById('scanLine');
             const statusBox = document.getElementById('statusBox');
+            const selectBox = document.getElementById('cameraSelection');
 
             try {
                 html5QrCode = new Html5Qrcode("reader");
-                const cameras = await Html5Qrcode.getCameras();
 
-                if (cameras && cameras.length > 0) {
-                    const selectBox = document.getElementById('cameraSelection');
-                    selectBox.innerHTML = '';
+                // Langsung nyalakan kamera default terlebih dahulu agar browser mengeluarkan izin akses (Permission Prompt)
+                await html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    { fps: 10, qrbox: { width: 150, height: 150 } }, 
+                    onQRSuccess
+                );
 
-                    cameras.forEach((cam, index) => {
-                        let option = document.createElement('option');
-                        option.value = cam.id;
-                        option.text = cam.label || `Kamera ${index + 1}`;
-                        selectBox.appendChild(option);
-                    });
+                loadingText.style.display = 'none';
+                scanLine.style.display = 'block';
 
-                    document.getElementById('cameraSelectContainer').style.display = 'flex';
-
-                    // Pilih kamera belakang secara default jika di HP, atau kamera pertama di laptop
-                    let targetCamId = cameras[0].id;
-                    let backCam = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('belakang') || c.label.toLowerCase().includes('rear'));
-                    if (backCam) {
-                        targetCamId = backCam.id;
-                        selectBox.value = backCam.id;
+                // Setelah kamera menyala dan izin didapat, ambil daftar perangkat kamera lengkap
+                try {
+                    const cameras = await Html5Qrcode.getCameras();
+                    if (cameras && cameras.length > 0) {
+                        selectBox.innerHTML = '';
+                        cameras.forEach((cam, index) => {
+                            let option = document.createElement('option');
+                            option.value = cam.id;
+                            option.text = cam.label || `Kamera ${index + 1}`;
+                            selectBox.appendChild(option);
+                        });
                     }
+                } catch(errCamList) {
+                    console.log("Gagal melist kamera detail");
+                }
 
-                    await mulaiKamera(targetCamId);
-                } else {
-                    // Fallback jika tidak terdeteksi via getCameras
-                    await html5QrCode.start({ facingMode: "user" }, { fps: 10, qrbox: { width: 150, height: 150 } }, onQRSuccess);
+            } catch(e) {
+                // Fallback jika kamera belakang gagal, coba kamera depan (user)
+                try {
+                    await html5QrCode.start(
+                        { facingMode: "user" }, 
+                        { fps: 10, qrbox: { width: 150, height: 150 } }, 
+                        onQRSuccess
+                    );
                     loadingText.style.display = 'none';
                     scanLine.style.display = 'block';
+                } catch(err2) {
+                    loadingText.innerText = "❌ Gagal membuka kamera. Izinkan akses kamera di browser.";
                 }
-            } catch(e) {
-                loadingText.innerText = "❌ Gagal mendeteksi kamera. Pastikan izin kamera aktif.";
             }
 
             window.gantiKameraPilihan = async function() {
-                const selectBox = document.getElementById('cameraSelection');
                 const selectedId = selectBox.value;
-                if (html5QrCode && html5QrCode.isScanning) {
-                    await html5QrCode.stop();
-                }
-                await mulaiKamera(selectedId);
-            };
-
-            async function mulaiKamera(camId) {
+                if (!selectedId) return;
+                
                 try {
-                    currentCameraId = camId;
+                    if (html5QrCode && html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    loadingText.style.display = 'flex';
+                    loadingText.innerText = "🔄 Mengganti Kamera...";
+
                     await html5QrCode.start(
-                        camId,
+                        selectedId,
                         { fps: 10, qrbox: { width: 150, height: 150 } },
                         onQRSuccess
                     );
                     loadingText.style.display = 'none';
                     scanLine.style.display = 'block';
                 } catch(err) {
-                    loadingText.innerText = "❌ Gagal menyalakan kamera yang dipilih.";
+                    loadingText.innerText = "❌ Gagal mengganti kamera.";
                 }
-            }
+            };
 
             function onQRSuccess(decodedText) {
                 if (isScanning) return;
